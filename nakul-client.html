@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="manifest" href="manifest-client.json" />
+<meta name="theme-color" content="#0B3D2E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="NA'KUL Client" />
+<link rel="apple-touch-icon" href="icon-192-client.png" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<title>NA'KUL HALAL — Client</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+  :root { --green:#0B3D2E; --greendark:#082C22; --gold:#C9A227; --cream:#F7F5EF; --ink:#1A1A1A; --mute:#6B7568; --chip:#E8EFE8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Inter',sans-serif; background:var(--cream); color:var(--ink); }
+  .serif { font-family:'Fraunces',serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 90px; }
+  .header { background: var(--green); color:white; padding: 16px; }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
+  select { background:transparent; border:none; color:white; font-weight:500; font-size:14px; }
+  .greet { font-size: 14px; opacity:.9; }
+  .title { font-size: 24px; margin: 4px 0 14px; line-height:1.3; }
+  .search { background:white; border-radius: 12px; padding: 10px 14px; color: var(--mute); font-size:14px; }
+  .promo { margin:-8px 16px 20px; background:#FBF3DC; border-radius:16px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .section-title { font-weight:500; font-size:14px; margin: 0 16px 8px; }
+  .list { padding: 0 16px; display:flex; flex-direction:column; gap:8px; }
+  .card { background:white; border:1px solid #EDEAE0; border-radius:16px; padding:12px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+  .card-icon { width:52px; height:52px; border-radius:12px; background:var(--chip); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .badge { font-size:9px; font-weight:bold; padding:1px 5px; border-radius:4px; background:var(--green); color:white; }
+  .muted { color: var(--mute); font-size: 12px; }
+  .empty { font-style:italic; color:var(--mute); text-align:center; padding: 24px; border:1px dashed #EDEAE0; border-radius:16px; margin: 0 16px; }
+  .navbar { position:fixed; bottom:0; left:0; right:0; background:white; border-top:1px solid #E5E2D9; display:flex; justify-content:space-around; padding:8px 0; max-width:480px; margin:0 auto; }
+  .navbtn { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; font-size:10px; color:#9CA69C; }
+  .navbtn.active { color: var(--green); font-weight:600; }
+  .btn { width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:white; font-weight:600; font-size:14px; }
+  .btn.gold { background: var(--gold); color: var(--ink); }
+  .view { display:none; }
+  .view.show { display:block; }
+  .menuhead { height:150px; background:linear-gradient(135deg,var(--green),var(--greendark)); display:flex; align-items:flex-end; padding:16px; position:relative; }
+  .backbtn { position:absolute; top:12px; left:12px; background:rgba(255,255,255,.9); border:none; border-radius:999px; width:30px; height:30px; }
+  .menuitem { display:flex; justify-content:space-between; align-items:center; background:white; border:1px solid #EDEAE0; border-radius:16px; padding:12px; margin-bottom:8px; }
+  .addbtn { background:var(--green); border:none; color:white; border-radius:999px; width:32px; height:32px; font-size:18px; flex-shrink:0; }
+  .cartbar { position:fixed; bottom:56px; left:0; right:0; max-width:480px; margin:0 auto; padding:12px; }
+  .cartbar button { display:flex; justify-content:space-between; align-items:center; }
+  input[type=text] { width:100%; padding:12px 14px; border:1px solid #EDEAE0; border-radius:12px; font-size:14px; margin-top:12px; }
+  .track-card { background:white; border:1px solid #EDEAE0; border-radius:16px; padding:16px; }
+  .progress { display:flex; align-items:center; margin: 12px 0; }
+  .dot { width:10px; height:10px; border-radius:999px; background:#E5E2D9; flex-shrink:0; }
+  .dot.done { background: var(--gold); }
+  .line { height:2px; flex:1; background:#E5E2D9; }
+  .line.done { background: var(--gold); }
+  .toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:#B91C1C; color:white; padding:10px 16px; border-radius:10px; font-size:13px; display:none; z-index:50; max-width: 90%; }
+  .chip-row { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 4px; }
+  .chip { padding:8px 14px; border-radius:999px; border:1px solid #EDEAE0; background:white; font-size:13px; font-weight:500; color:var(--ink); }
+  .chip.active { background:var(--green); color:white; border-color:var(--green); }
+  .chip.gold-active { background:var(--gold); color:var(--ink); border-color:var(--gold); }
+  .section-block { padding:14px; border-bottom:1px solid #EDEAE0; }
+  .section-block .lbl { font-size:13px; font-weight:500; margin-bottom:2px; }
+  .section-block .sub { font-size:11px; color:var(--mute); }
+  .cagnotte-banner { margin:0 16px 12px; background:#EAF3EC; border:1px solid #CFE3D4; border-radius:14px; padding:12px 14px; font-size:12px; color:var(--green); }
+  #liveMap { height:180px; border-radius:14px; overflow:hidden; margin-top:10px; border:1px solid #EDEAE0; }
+  .map-wait { text-align:center; padding:20px; font-size:12px; color:var(--mute); background:var(--cream); border-radius:14px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- ACCUEIL -->
+  <div id="viewHome" class="view show">
+    <div class="header">
+      <div class="header-top">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span>📍</span>
+          <select id="citySelect" onchange="onCityChange()">
+            <option value="Lyon">Lyon</option>
+            <option value="Paris">Paris</option>
+            <option value="Marseille">Marseille</option>
+          </select>
+        </div>
+        <span id="notifBell" onclick="activateClientNotifications()" style="cursor:pointer;font-size:18px;">🔔</span>
+      </div>
+      <div class="greet">Salam 👋</div>
+      <div class="title serif">Qu'avez-vous envie<br/>de manger aujourd'hui ?</div>
+      <div class="search">🔍 Rechercher un plat, restaurant...</div>
+    </div>
+    <div class="promo"><div><b>Livraison offerte</b><div class="muted">Dès 25€ d'achat</div></div><div style="font-size:28px;">🛵</div></div>
+    <div class="cagnotte-banner">🤲 <b>Cagnotte NA'KUL</b> — <span id="cagnotteHome">chargement...</span> déjà reversés à des familles dans le besoin.</div>
+    <div class="section-title" id="restoTitle">Restaurants à Lyon</div>
+    <div id="restoList" class="list"></div>
+  </div>
+
+  <!-- MENU -->
+  <div id="viewMenu" class="view">
+    <div class="menuhead"><button class="backbtn" onclick="goHome()">←</button><div style="font-size:44px;">🍽️</div></div>
+    <div style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <h2 class="serif" id="menuRestoName" style="margin:0;font-size:20px;"></h2>
+        <span class="badge">HALAL</span>
+      </div>
+      <div class="muted" id="menuRestoCuisine"></div>
+      <div id="menuItems" style="margin-top:14px;"></div>
+    </div>
+    <div id="cartBar" class="cartbar" style="display:none;">
+      <button class="btn" onclick="showView('checkout')">🛍️ Voir le panier <span id="cartTotalLabel"></span></button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT -->
+  <div id="viewCheckout" class="view">
+    <div style="padding:16px;">
+      <button onclick="showView('menu')" style="background:none;border:none;color:var(--green);font-size:14px;margin-bottom:12px;">← Retour</button>
+      <div style="background:white;border:1px solid #EDEAE0;border-radius:16px;overflow:hidden;">
+        <div style="padding:14px;background:var(--cream);font-weight:500;" id="checkoutRestoName"></div>
+        <div id="checkoutItems" style="padding:14px;border-bottom:1px solid #EDEAE0;"></div>
+        <div style="padding:14px;border-bottom:1px solid #EDEAE0;font-size:14px;color:var(--mute);">
+          <div style="display:flex;justify-content:space-between;"><span>Sous-total</span><span id="subTotal"></span></div>
+          <div style="display:flex;justify-content:space-between;"><span>Frais de livraison</span><span>2.50 €</span></div>
+        </div>
+        <div class="section-block">
+          <div class="lbl">🛵 Pourboire pour le livreur</div>
+          <div class="sub">100% reversé, en plus de sa course</div>
+          <div class="chip-row" id="tipChips">
+            <button type="button" class="chip active" onclick="setTip(0,this)">Aucun</button>
+            <button type="button" class="chip" onclick="setTip(1,this)">1 €</button>
+            <button type="button" class="chip" onclick="setTip(2,this)">2 €</button>
+            <button type="button" class="chip" onclick="setTip(3,this)">3 €</button>
+          </div>
+        </div>
+        <div class="section-block" style="border-bottom:none;">
+          <div class="lbl">🤲 Aumône pour la Cagnotte NA'KUL</div>
+          <div class="sub">Redistribuée chaque mois à des familles qui ne peuvent pas commander</div>
+          <div class="chip-row" id="donationChips">
+            <button type="button" class="chip gold-active" onclick="setDonation(0.5,this)">0,50 €</button>
+            <button type="button" class="chip" onclick="setDonation(1,this)">1 €</button>
+            <button type="button" class="chip" onclick="setDonation(2,this)">2 €</button>
+            <button type="button" class="chip" onclick="setDonation(0,this)">Non merci</button>
+          </div>
+        </div>
+        <div style="padding:14px;display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #EDEAE0;" class="serif"><span>Total</span><span id="grandTotal"></span></div>
+      </div>
+      <input type="text" id="addressInput" placeholder="Adresse de livraison" />
+      <div style="margin-top:14px;"><button class="btn" onclick="placeOrder()">Valider la commande</button></div>
+    </div>
+  </div>
+
+  <!-- COMMANDES / SUIVI -->
+  <div id="viewOrders" class="view">
+    <div style="padding:16px;">
+      <h2 class="serif" style="margin:0 0 14px;">Suivi de commande</h2>
+      <div id="orderTracking"></div>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <button class="navbtn active" id="nav-accueil" onclick="switchTab('accueil')">🏠<span>Accueil</span></button>
+    <button class="navbtn" id="nav-explorer" onclick="switchTab('explorer')">🔍<span>Explorer</span></button>
+    <button class="navbtn" id="nav-commandes" onclick="switchTab('commandes')">📋<span>Commandes</span></button>
+    <button class="navbtn" id="nav-favoris" onclick="switchTab('favoris')">❤️<span>Favoris</span></button>
+    <button class="navbtn" id="nav-profil" onclick="switchTab('profil')">👤<span>Profil</span></button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API_BASE = "https://appli-delivery-halal-production.up.railway.app";
+let city = "Lyon";
+let restaurants = [];
+let openRestaurant = null;
+let cart = [];
+let currentOrder = null;
+let pollTimer = null;
+let tip = 0;
+let donation = 0.5;
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('show'));
+  document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('show');
+}
+function goHome() { showView('home'); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'accueil') showView('home');
+  else if (tab === 'commandes') { showView('orders'); renderTracking(); }
+  else toast("Cette section arrive bientôt.");
+}
+
+function onCityChange() {
+  city = document.getElementById('citySelect').value;
+  document.getElementById('restoTitle').textContent = 'Restaurants à ' + city;
+  loadRestaurants();
+}
+
+async function loadRestaurants() {
+  document.getElementById('restoList').innerHTML = '<div class="muted" style="padding:16px;">Chargement...</div>';
+  try {
+    const res = await fetch(`${API_BASE}/api/cities/${city}/restaurants`);
+    restaurants = await res.json();
+    renderRestaurants();
+  } catch (e) {
+    document.getElementById('restoList').innerHTML = '<div class="empty">Impossible de contacter le serveur.</div>';
+  }
+}
+
+function renderRestaurants() {
+  const el = document.getElementById('restoList');
+  if (!restaurants.length) {
+    el.innerHTML = `<div class="empty">Aucun restaurant partenaire à ${city} pour l'instant.</div>`;
+    return;
+  }
+  el.innerHTML = restaurants.map((r, i) => `
+    <div class="card" onclick="openMenu(${i})">
+      <div class="card-icon">🍽️</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;"><b style="font-size:14px;">${r.name}</b><span class="badge">HALAL</span></div>
+        <div class="muted">${r.cuisine || ''}</div>
+      </div>
+      <span style="color:var(--mute);">›</span>
+    </div>`).join('');
+}
+
+function openMenu(i) {
+  openRestaurant = restaurants[i];
+  cart = [];
+  document.getElementById('menuRestoName').textContent = openRestaurant.name;
+  document.getElementById('menuRestoCuisine').textContent = openRestaurant.cuisine || '';
+  renderMenuItems();
+  updateCartBar();
+  showView('menu');
+}
+
+function renderMenuItems() {
+  const el = document.getElementById('menuItems');
+  const menu = openRestaurant.menu || [];
+  if (!menu.length) { el.innerHTML = "<div class=\"empty\">Ce restaurant n'a pas encore de plats au menu.</div>"; return; }
+  el.innerHTML = menu.map((item, i) => `
+    <div class="menuitem">
+      <div><div style="font-size:14px;font-weight:500;">${item.name}</div><div style="color:var(--green);font-weight:600;margin-top:4px;">${Number(item.price).toFixed(2)} €</div></div>
+      <button class="addbtn" onclick="addToCart(${i})">+</button>
+    </div>`).join('');
+}
+
+function addToCart(i) {
+  const item = openRestaurant.menu[i];
+  const found = cart.find(c => c.id === item.id);
+  if (found) found.qty += 1;
+  else cart.push({ ...item, qty: 1 });
+  updateCartBar();
+}
+
+function cartTotal() { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
+
+function updateCartBar() {
+  const bar = document.getElementById('cartBar');
+  if (cart.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  document.getElementById('cartTotalLabel').textContent = cartTotal().toFixed(2) + ' €';
+}
+
+function setTip(v, btn) {
+  tip = v;
+  document.querySelectorAll('#tipChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  updateGrandTotal();
+}
+function setDonation(v, btn) {
+  donation = v;
+  document.querySelectorAll('#donationChips .chip').forEach(c => c.classList.remove('gold-active'));
+  btn.classList.add('gold-active');
+  updateGrandTotal();
+}
+function updateGrandTotal() {
+  document.getElementById('grandTotal').textContent = (cartTotal() + 2.5 + tip + donation).toFixed(2) + ' €';
+}
+
+function renderCheckout() {
+  tip = 0; donation = 0.5;
+  document.getElementById('checkoutRestoName').textContent = openRestaurant.name;
+  document.getElementById('checkoutItems').innerHTML = cart.map(i => `
+    <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+      <span>${i.qty} ${i.name}</span><span>${(i.price*i.qty).toFixed(2)} €</span>
+    </div>`).join('');
+  document.getElementById('subTotal').textContent = cartTotal().toFixed(2) + ' €';
+  updateGrandTotal();
+}
+
+async function loadCagnotte() {
+  try {
+    const res = await fetch(`${API_BASE}/api/cagnotte`);
+    const data = await res.json();
+    const el = document.getElementById('cagnotteHome');
+    if (el) el.textContent = Number(data.total_distributed || 0).toFixed(2) + ' €';
+  } catch (e) {}
+}
+
+// Intercepte le passage au checkout pour peupler les données
+const origShowView = showView;
+showView = function(name) {
+  if (name === 'checkout') renderCheckout();
+  origShowView(name);
+};
+
+function getDeviceId() {
+  let id = localStorage.getItem('nakul_device_id');
+  if (!id) { id = 'device-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('nakul_device_id', id); }
+  return id;
+}
+
+// Activation directe depuis un clic (nécessaire : une demande lancée sans geste est bloquée en silence).
+// Sert surtout à obtenir l'autorisation à l'avance, pour que l'abonnement lié à la commande
+// se fasse ensuite sans redemander quoi que ce soit.
+async function activateClientNotifications() {
+  const bell = document.getElementById('notifBell');
+  const permissionPromise = ('Notification' in window) ? Notification.requestPermission() : Promise.resolve('denied');
+  await initPush('client', getDeviceId(), city, permissionPromise);
+  bell.textContent = Notification.permission === 'granted' ? '🔔' : '🔕';
+  bell.style.opacity = Notification.permission === 'granted' ? '1' : '0.5';
+  toast(Notification.permission === 'granted' ? 'Notifications activées !' : 'Autorisation refusée.');
+}
+
+async function placeOrder() {
+  // La demande d'autorisation doit partir immédiatement du clic (geste utilisateur),
+  // sinon le téléphone la bloque silencieusement si elle arrive après plusieurs attentes réseau.
+  const permissionPromise = ('Notification' in window) ? Notification.requestPermission() : Promise.resolve('denied');
+  const address = document.getElementById('addressInput').value || `Adresse à ${city}`;
+  try {
+    const res = await fetch(`${API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        city, restaurant_id: openRestaurant.id, restaurant_name: openRestaurant.name,
+        items: cart, items_total: cartTotal(), delivery_fee: 2.5, tip, donation, address,
+      }),
+    });
+    currentOrder = await res.json();
+    cart = [];
+    switchTab('commandes');
+    startPolling();
+    initPush('client', currentOrder.id, city, permissionPromise);
+  } catch (e) {
+    toast("Impossible d'envoyer la commande. Vérifie ta connexion.");
+  }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (!currentOrder) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${currentOrder.id}`);
+      const data = await res.json();
+      if (data && !data.error) { currentOrder = data; renderTracking(); }
+    } catch (e) {}
+  }, 3000);
+}
+
+const STATUS_LABELS = { nouvelle:"Commande envoyée au restaurant", acceptee:"Acceptée par le restaurant", preparation:"En préparation", prete:"Prête — en attente d'un livreur", en_livraison:"En livraison", livree:"Livrée" };
+const FLOW = ["nouvelle","acceptee","preparation","prete","en_livraison","livree"];
+
+function renderTracking() {
+  const el = document.getElementById('orderTracking');
+  if (!currentOrder) { el.innerHTML = '<div class="empty">Aucune commande en cours.</div>'; return; }
+  const idx = FLOW.indexOf(currentOrder.status);
+  let dots = '';
+  FLOW.forEach((s, i) => {
+    dots += `<div class="dot ${i<=idx?'done':''}"></div>`;
+    if (i < FLOW.length-1) dots += `<div class="line ${i<idx?'done':''}"></div>`;
+  });
+  const items = JSON.parse(currentOrder.items || '[]');
+  const showMap = currentOrder.status === 'en_livraison';
+  el.innerHTML = `
+    <div class="track-card">
+      <div class="muted" style="text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-size:10px;">Commande #${currentOrder.id}</div>
+      <div class="serif" style="font-size:18px;margin:2px 0 8px;">${currentOrder.restaurant_name}</div>
+      <div style="color:var(--green);font-weight:500;font-size:14px;">${currentOrder.status==='en_livraison'&&currentOrder.driver_name ? currentOrder.driver_name+' arrive avec votre commande' : STATUS_LABELS[currentOrder.status]}</div>
+      <div class="progress">${dots}</div>
+      ${showMap ? (currentOrder.driver_lat ? '<div id="liveMap"></div>' : '<div class="map-wait">📍 En attente de la position GPS du livreur...</div>') : ''}
+      <div style="border-top:1px solid #EDEAE0;padding-top:10px;margin-top:10px;">
+        ${items.map(i => `<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--mute);margin-bottom:4px;"><span>${i.qty}× ${i.name}</span><span>${(i.price*i.qty).toFixed(2)} €</span></div>`).join('')}
+        ${Number(currentOrder.tip) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--green);margin-bottom:4px;"><span>🛵 Pourboire livreur</span><span>${Number(currentOrder.tip).toFixed(2)} €</span></div>` : ''}
+        ${Number(currentOrder.donation) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--green);margin-bottom:4px;"><span>🤲 Aumône Cagnotte</span><span>${Number(currentOrder.donation).toFixed(2)} €</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-weight:600;margin-top:6px;"><span>Total</span><span>${Number(currentOrder.total).toFixed(2)} €</span></div>
+      </div>
+    </div>`;
+  if (showMap && currentOrder.driver_lat) updateLiveMap(currentOrder.driver_lat, currentOrder.driver_lng);
+}
+
+// ---------- Carte en direct (position réelle envoyée par le livreur) ----------
+let liveMapInstance = null;
+let liveMapMarker = null;
+function updateLiveMap(lat, lng) {
+  const el = document.getElementById('liveMap');
+  if (!el || typeof L === 'undefined') return;
+  if (!liveMapInstance) {
+    liveMapInstance = L.map('liveMap', { zoomControl: false, attributionControl: false }).setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(liveMapInstance);
+    liveMapMarker = L.marker([lat, lng]).addTo(liveMapInstance);
+  } else {
+    liveMapInstance.setView([lat, lng]);
+    liveMapMarker.setLatLng([lat, lng]);
+  }
+}
+
+// ---------- Notifications push ----------
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const arr = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i);
+  return arr;
+}
+async function initPush(role, refId, cityVal, permissionPromise) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const permission = await (permissionPromise || Notification.requestPermission());
+    if (permission !== 'granted') return;
+    const { publicKey } = await (await fetch(`${API_BASE}/api/push/public-key`)).json();
+    if (!publicKey) return;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+    await fetch(`${API_BASE}/api/push/subscribe`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, ref_id: refId, city: cityVal, subscription: sub.toJSON ? sub.toJSON() : sub }),
+    });
+  } catch (e) { /* notifications non disponibles sur ce navigateur */ }
+}
+
+
+async function loadCityOptions() {
+  try {
+    const res = await fetch(`${API_BASE}/api/cities`);
+    const cities = await res.json();
+    const sel = document.getElementById('citySelect');
+    const existing = Array.from(sel.options).map((o) => o.value);
+    cities.forEach((c) => { if (!existing.includes(c)) sel.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`); });
+  } catch (e) {}
+}
+
+loadRestaurants();
+loadCagnotte();
+loadCityOptions();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
